@@ -14,6 +14,7 @@
           - curl
           - gnupg
           - lsb-release
+          - python3-pip
         update-cache: true
         cache_valid_time: 86400
 
@@ -43,31 +44,38 @@
         name: docker
         state: restarted
         enabled: true
-      become: true
+  become: true
+
+- name: Установка Docker-Compose
+  block:
+    - name: Получаем последнюю версию Docker-Compose
+      uri:
+        url: https://api.github.com/repos/docker/compose/releases/latest
+        body_format: json
+      register: page
 
     - name: Установка Docker-Compose
-      block:
-        - name: Получаем последнюю версию Docker-Compose
-          uri:
-            url: https://api.github.com/repos/docker/compose/releases/latest
-            body_format: json
-          register: page
+      get_url:
+        url: 'https://github.com/docker/compose/releases/download/{{ page.json.tag_name }}/docker-compose-Linux-x86_64'
+        dest: /usr/local/bin/docker-compose
+        mode: 0755
+  become: true
 
-        - name: Установка Docker-Compose
-          get_url:
-            url: 'https://github.com/docker/compose/releases/download/{{ page.json.tag_name }}/docker-compose-Linux-x86_64'
-            dest: /usr/local/bin/docker-compose
-            mode: 0755
-      become: true
 
-    - name: Завершение установки
-      block:
-        - name: Добавление пользователя в группу Docker
-          user:
-            name: '{{ ansible_user }}'
-            groups: docker
-            append: true
+- name: Настройка дополнительных пакетов python
+  block:
+    - name: Установка pip пакетов
+      pip:
+        name: docker
 
-        - name: Перезагрузка
-          reboot:
-      become: true
+- name: Завершение установки
+  block:
+    - name: Добавление пользователя в группу Docker
+      user:
+        name: '{{ ansible_user }}'
+        groups: docker
+        append: true
+
+    - name: Перезагрузка
+      reboot:
+  become: true
