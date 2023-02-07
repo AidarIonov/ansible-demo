@@ -12,15 +12,23 @@ rmq_defaults:
 services:
   - name: api
     version: latest
-  # - name: app
-  #   version: latest
-  # - name: converter
-  #   version: latest
+  - name: app
+    version: latest
+  - name: converter
+    version: latest
   - name: rmq
+    version: 3-management
+  - name: nginx
     version: latest
 
 non_build_services:
   - name: rmq
+    version: 3-management
+  - name: nginx
     version: latest
 
 registry_name: 'localhost:5000/'
+
+configs:
+  converter:
+    queue: q_imageProcessor
